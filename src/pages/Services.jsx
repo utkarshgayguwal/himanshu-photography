@@ -164,7 +164,7 @@ export default function Services() {
               <FadeUp key={s.id} delay={0.05}>
                 <div className={`grid grid-cols-1 md:grid-cols-2 gap-0 border-b border-[#C9A96E]/10 py-16 ${i % 2 === 1 ? 'md:grid-flow-dense' : ''}`}>
                   {/* Image */}
-                  <div className={`img-zoom overflow-hidden aspect-video md:aspect-[4/3] ${i % 2 === 1 ? 'md:col-start-2' : ''}`}>
+                  <div className={`relative img-zoom overflow-hidden aspect-video md:aspect-[4/3] ${i % 2 === 1 ? 'md:col-start-2' : ''}`}>
                     <img src={s.img} alt={s.title} className="w-full h-full object-cover" loading="lazy" />
                     {s.tag && (
                       <div className="absolute top-4 left-4 bg-[#C9A96E] text-[#0D0D0D] text-[0.6rem] tracking-[0.15em] uppercase px-3 py-1.5" style={{ fontFamily: 'DM Sans', fontWeight: 500 }}>
