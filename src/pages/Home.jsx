@@ -263,7 +263,7 @@ export default function Home() {
 
           <FadeUp delay={0.3}>
             <div className="text-center mt-12">
-              <Link to="/services" className="btn-outline">
+              <Link to="/work" className="btn-outline">
                 View All Work
               </Link>
             </div>
