@@ -38,7 +38,7 @@ export default function Footer() {
               Navigation
             </p>
             <div className="flex flex-col gap-3">
-              {[['/', 'Home'], ['/services', 'Services'], ['/about', 'About Us'], ['/contact', 'Contact']].map(([to, label]) => (
+              {[['/', 'Home'], ['/services', 'Services'], ['/work', 'Work'], ['/about', 'About Us'], ['/contact', 'Contact']].map(([to, label]) => (
                 <Link
                   key={to}
                   to={to}
