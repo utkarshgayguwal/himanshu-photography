@@ -1,22 +1,14 @@
 # Stage 1: Build the application
-# We use a Node.js base image to install dependencies and build the project
 FROM node:20-alpine AS build
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json first to leverage Docker's cache
-# This means if dependencies haven't changed, Docker will skip npm install
 COPY package*.json ./
 
-# Install project dependencies
 RUN npm install
 
-# Copy the rest of the application source code
 COPY . .
 
-# Build the project for production
-# This generates the 'dist' folder with optimized static files
 RUN npm run build
 
 # Stage 2: Serve the application using Nginx
