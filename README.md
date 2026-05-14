@@ -22,7 +22,8 @@ A premium, modern portfolio web application for Himanshu Photography. Built to s
 
 ### Prerequisites
 
-Ensure you have [Node.js](https://nodejs.org/) installed on your machine.
+- [Node.js](https://nodejs.org/) (for local development)
+- [Docker](https://www.docker.com/) (optional, for production containerization)
 
 ### Installation
 
@@ -44,39 +45,32 @@ Start the Vite development server to view the app locally:
 npm run dev
 ```
 
-Open `http://localhost:5173` (or the URL provided in your terminal) in your browser to see the application.
+Open `http://localhost:5173` in your browser.
 
-### Building for Production
+---
 
-To create a production-ready build:
+## 🐳 Docker Support (Production)
 
-```bash
-npm run build
-```
+This project is fully containerized using a multi-stage Docker build for optimal performance and security.
 
-This will generate a `dist` directory containing the optimized static files, ready to be deployed to platforms like Vercel, Netlify, or your preferred hosting provider.
+### Build and Run with Docker
 
-## Project Structure
+1. **Build the image:**
+   ```bash
+   docker build -t himanshu-photography .
+   ```
 
-```text
-himanshu-photography/
-├── public/               # Static assets (local images, icons)
-├── src/
-│   ├── components/       # Reusable UI components (Navbar, Footer, etc.)
-│   ├── pages/            # Main application pages (Home, About, Services, Work, Contact)
-│   ├── App.jsx           # Main application routing and layout setup
-│   ├── index.css         # Global CSS styles and Tailwind directives
-│   └── main.jsx          # Application entry point
-├── package.json          # Project metadata and dependencies
-├── tailwind.config.js    # Tailwind CSS configuration
-└── vite.config.js        # Vite bundler configuration
-```
+2. **Run the container:**
+   ```bash
+   docker run -p 8080:80 himanshu-photography
+   ```
 
-## Customization
+3. **Access the site:**
+   Navigate to `http://localhost:8080`.
 
-- **Brand Colors:** The project heavily uses a luxury color palette. You can find and modify the gold gradient (`#C9A96E`, `#E8D5AA`) and dark background (`#0D0D0D`, `#080808`) classes throughout the components and pages.
-- **Typography:** The app uses `Cormorant Garamond` for elegant headings and `DM Sans` for clean body text. Ensure these are imported in your global styles or `index.html`.
+### Docker Architecture
 
-## Contact
+- **Multi-Stage Build:** We use a `node:20-alpine` stage to build the project and a `nginx:stable-alpine` stage to serve the final static files. This keeps the image size under 25MB.
+- **SPA Routing:** A custom `nginx.conf` is included to handle client-side routing (React Router), ensuring that page refreshes on sub-routes (like `/portfolio`) work correctly.
+- **Optimization:** A `.dockerignore` file is used to speed up builds by excluding unnecessary files like `node_modules` and `.git`.
 
-For any queries regarding this project, please reach out via the contact form on the live site.
