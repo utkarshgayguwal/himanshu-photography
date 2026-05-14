@@ -1,0 +1,13 @@
+node_modules
+dist
+.git
+.gitignore
+Dockerfile
+.dockerignore
+npm-debug.log
+README.md
+.eslintrc.cjs
+.eslint.config.js
+postcss.config.js
+tailwind.config.js
+vite.config.js
