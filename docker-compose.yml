@@ -1,0 +1,26 @@
+services:
+  # DEVELOPMENT MODE
+  # This reflects your local changes instantly using Volume Mounting.
+  # No need to rebuild the image when you change your code!
+  dev:
+    image: node:20-alpine
+    working_dir: /app
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      # Anonymous volume for node_modules ensures the container 
+      # uses its own dependencies instead of your local ones.
+      - /app/node_modules 
+    # We pass --host to Vite so it's accessible outside the container
+    command: sh -c "npm install && npm run dev -- --host"
+    environment:
+      - CHOKIDAR_USEPOLLING=true # Helps with file watching on some systems
+
+  # PRODUCTION MODE
+  # This uses your Dockerfile to build a fast, secure Nginx-based image.
+  prod:
+    build: .
+    image: himanshu-photography:prod
+    ports:
+      - "8080:80"
