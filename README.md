@@ -25,6 +25,8 @@ A premium, modern portfolio web application for Himanshu Photography. Built to s
 
 This project is fully containerized. You do not need to install Node.js or Vite on your local machine; you only need **Docker**.
 
+The frontend source lives under [`frontend/`](./frontend). Run all commands below from the repo root — `docker-compose.yml` there points at `./frontend` for you.
+
 ### 🛠 Development Mode (Live Changes)
 Use this mode while coding. It uses **Volume Mounting** so any changes you save in your editor will reflect instantly in the browser.
 
