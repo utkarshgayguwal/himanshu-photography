@@ -50,13 +50,31 @@ export default function Home() {
       {/* HERO */}
       <section ref={heroRef} className="relative h-screen min-h-[700px] flex items-end overflow-hidden">
         <motion.div className="absolute inset-0" style={{ y: heroY }}>
+          {/* Mobile: tall narrow viewport, a plain crop already keeps the couple in frame */}
           <img
             src={UNSPLASH_HERO}
             alt="Hero"
-            className="w-full h-full object-cover"
+            className="md:hidden w-full h-full object-cover"
           />
+
+          {/* Desktop: wide/short viewport can't fit this portrait photo uncropped via object-cover
+              without cutting the couple off, so letterbox the full photo over a blurred copy of itself */}
+          <div className="hidden md:block absolute inset-0">
+            <img
+              src={UNSPLASH_HERO}
+              alt=""
+              aria-hidden="true"
+              className="w-full h-full object-cover scale-110 blur-2xl opacity-50"
+            />
+            <img
+              src={UNSPLASH_HERO}
+              alt="Hero"
+              className="absolute inset-0 w-full h-full object-contain"
+            />
+          </div>
+
           <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-[#0D0D0D]/40 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0D0D0D]/60 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0D0D0D]/60 via-transparent to-transparent md:from-[#0D0D0D]/90 md:via-[#0D0D0D]/50 md:via-45% md:to-transparent" />
         </motion.div>
 
         {/* Grain overlay */}
