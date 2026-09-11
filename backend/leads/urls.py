@@ -1,7 +1,8 @@
-from django.urls import path
+from rest_framework.routers import SimpleRouter
 
 from . import views
 
-urlpatterns = [
-    path('contact/', views.ContactSubmissionCreateView.as_view(), name='contact-create'),
-]
+router = SimpleRouter(trailing_slash=True)
+router.register('contact', views.ContactSubmissionViewSet, basename='contact')
+
+urlpatterns = router.urls

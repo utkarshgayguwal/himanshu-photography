@@ -1,12 +1,22 @@
-from rest_framework.generics import CreateAPIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAdminUser
+from rest_framework.viewsets import ModelViewSet
 
 from .models import ContactSubmission
-from .serializers import ContactSubmissionSerializer
+from .serializers import ContactSubmissionAdminSerializer, ContactSubmissionSerializer
 
 
-class ContactSubmissionCreateView(CreateAPIView):
+class ContactSubmissionViewSet(ModelViewSet):
+    """Anyone can submit (create); only staff can list/view/update/delete leads."""
+
     queryset = ContactSubmission.objects.all()
-    serializer_class = ContactSubmissionSerializer
-    permission_classes = [AllowAny]
     throttle_scope = 'contact'
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [AllowAny()]
+        return [IsAdminUser()]
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return ContactSubmissionSerializer
+        return ContactSubmissionAdminSerializer
