@@ -12,6 +12,15 @@ dist
 dist-ssr
 *.local
 
+# Python / Django
+__pycache__/
+*.pyc
+.venv
+venv
+*.sqlite3
+staticfiles/
+.env
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
