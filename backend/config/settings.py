@@ -1,7 +1,13 @@
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Only fills in vars not already set — Docker Compose sets real env vars directly,
+# so this is a no-op there. It's what lets `backend/.env` configure a local (non-Docker) run.
+load_dotenv(BASE_DIR / '.env')
 
 
 def _env_list(name, default=''):
