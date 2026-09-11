@@ -1,4 +1,7 @@
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.generics import RetrieveUpdateAPIView
+from rest_framework.viewsets import ModelViewSet
+
+from config.permissions import IsAdminOrReadOnly
 
 from .models import (
     AboutContent,
@@ -22,50 +25,62 @@ from .serializers import (
 )
 
 
-class ServiceListView(ListAPIView):
+class ServiceViewSet(ModelViewSet):
     queryset = Service.objects.all()
     serializer_class = ServiceSerializer
+    permission_classes = [IsAdminOrReadOnly]
 
 
-class PortfolioImageListView(ListAPIView):
+class PortfolioImageViewSet(ModelViewSet):
     queryset = PortfolioImage.objects.all()
     serializer_class = PortfolioImageSerializer
+    permission_classes = [IsAdminOrReadOnly]
 
 
-class TestimonialListView(ListAPIView):
+class TestimonialViewSet(ModelViewSet):
     queryset = Testimonial.objects.all()
     serializer_class = TestimonialSerializer
+    permission_classes = [IsAdminOrReadOnly]
 
 
-class StatListView(ListAPIView):
+class StatViewSet(ModelViewSet):
     queryset = Stat.objects.all()
     serializer_class = StatSerializer
+    permission_classes = [IsAdminOrReadOnly]
 
 
-class PhilosophyValueListView(ListAPIView):
+class PhilosophyValueViewSet(ModelViewSet):
     queryset = PhilosophyValue.objects.all()
     serializer_class = PhilosophyValueSerializer
+    permission_classes = [IsAdminOrReadOnly]
 
 
-class AchievementListView(ListAPIView):
+class AchievementViewSet(ModelViewSet):
     queryset = Achievement.objects.all()
     serializer_class = AchievementSerializer
+    permission_classes = [IsAdminOrReadOnly]
 
 
-class SingletonRetrieveView(RetrieveAPIView):
-    """Base for the site's one-row 'settings' style endpoints."""
+class SingletonRetrieveUpdateView(RetrieveUpdateAPIView):
+    """Base for the site's one-row 'settings' style resources.
+
+    There's only ever one row (created on first access via `.load()`), so
+    "full CRUD" here means read + update — creating a second row or
+    deleting the only one wouldn't make sense.
+    """
 
     model = None
+    permission_classes = [IsAdminOrReadOnly]
 
     def get_object(self):
         return self.model.load()
 
 
-class AboutContentView(SingletonRetrieveView):
+class AboutContentView(SingletonRetrieveUpdateView):
     model = AboutContent
     serializer_class = AboutContentSerializer
 
 
-class SiteSettingsView(SingletonRetrieveView):
+class SiteSettingsView(SingletonRetrieveUpdateView):
     model = SiteSettings
     serializer_class = SiteSettingsSerializer
