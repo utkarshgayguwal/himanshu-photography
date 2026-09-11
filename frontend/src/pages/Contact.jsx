@@ -47,12 +47,28 @@ export default function Contact() {
     name: '', email: '', phone: '', service: '', date: '', message: '',
   });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault();
-    setSubmitted(true);
+    setSubmitting(true);
+    setError('');
+    try {
+      const res = await fetch('/api/contact/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, date: form.date || null }),
+      });
+      if (!res.ok) throw new Error('Request failed');
+      setSubmitted(true);
+    } catch {
+      setError("Something went wrong sending your message. Please try again, or reach out via phone/email above.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const inputCls = "w-full bg-transparent border-b border-[#C9A96E]/20 text-[#F5F0E8] text-sm py-3 focus:outline-none focus:border-[#C9A96E]/60 transition-colors placeholder-[#F5F0E8]/20 font-light";
@@ -281,11 +297,16 @@ export default function Contact() {
                         />
                       </div>
 
+                      {error && (
+                        <p className="text-red-400/80 text-xs" style={{ fontFamily: 'DM Sans' }}>{error}</p>
+                      )}
+
                       <button
                         type="submit"
-                        className="btn-gold w-full flex items-center justify-center gap-2 mt-2"
+                        disabled={submitting}
+                        className="btn-gold w-full flex items-center justify-center gap-2 mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Send Message <Send size={13} />
+                        {submitting ? 'Sending...' : 'Send Message'} <Send size={13} />
                       </button>
                     </form>
                   </>
