@@ -4,3 +4,5 @@ psycopg2-binary>=2.9,<3
 django-cors-headers>=4.4,<4.5
 whitenoise>=6.7,<6.8
 gunicorn>=22.0,<23
+pytest>=8.2,<9
+pytest-django>=4.9,<5
