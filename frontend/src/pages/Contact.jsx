@@ -76,7 +76,7 @@ export default function Contact() {
   return (
     <div className="bg-[#0D0D0D] pt-16">
       {/* Hero */}
-      <section className="relative py-32 overflow-hidden">
+      <section className="relative py-32 min-h-[680px] flex items-center overflow-hidden">
         <div className="absolute inset-0">
           <img
             src="https://images.unsplash.com/photo-1519741497674-611481863552?w=1800&q=80"
@@ -110,7 +110,7 @@ export default function Contact() {
               <br />
               Timeless.
             </h1>
-            <p className="text-[#F5F0E8]/50 text-sm font-light max-w-md mx-auto" style={{ fontFamily: 'DM Sans' }}>
+            <p className="text-[#F5F0E8]/50 text-sm font-light max-w-lg mx-auto" style={{ fontFamily: 'DM Sans' }}>
               Share your vision and let's craft a photography experience as unique as your story.
             </p>
           </motion.div>

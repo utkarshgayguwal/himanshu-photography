@@ -75,7 +75,7 @@ export default function Work() {
   return (
     <div className="bg-[#0D0D0D] pt-16 min-h-screen">
       {/* Hero */}
-      <section className="relative py-32 overflow-hidden">
+      <section className="relative py-32 min-h-[680px] flex items-center overflow-hidden">
         <div className="absolute inset-0">
           <img
             src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=1800&q=80"

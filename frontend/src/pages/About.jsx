@@ -33,28 +33,27 @@ export default function About() {
   return (
     <div className="bg-[#0D0D0D] pt-16">
       {/* Hero */}
-      <section className="relative py-32 md:py-44 overflow-hidden">
+      <section className="relative py-32 min-h-[680px] flex items-center overflow-hidden">
         <div className="absolute inset-0">
           <img
             src="https://images.unsplash.com/photo-1606800052052-a08af7148866?w=1800&q=80"
             alt="About"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0D0D0D]/95 via-[#0D0D0D]/70 to-[#0D0D0D]/40" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-[#0D0D0D]/85" />
         </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12">
+        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1 }}
-            className="max-w-2xl"
           >
-            <div className="flex items-center gap-3 mb-8">
+            <div className="flex items-center justify-center gap-3 mb-6">
               <div className="gold-line" />
               <span className="text-[#C9A96E]/70 text-[0.6rem] tracking-[0.25em] uppercase" style={{ fontFamily: 'DM Sans' }}>
                 About the Artist
               </span>
+              <div className="gold-line" />
             </div>
             <h1
               className="text-6xl md:text-7xl lg:text-8xl leading-[0.88] text-[#F5F0E8] mb-6"
@@ -68,7 +67,7 @@ export default function About() {
                 Lens
               </span>
             </h1>
-            <p className="text-[#F5F0E8]/60 text-sm font-light leading-relaxed max-w-md" style={{ fontFamily: 'DM Sans' }}>
+            <p className="text-[#F5F0E8]/50 text-sm font-light max-w-lg mx-auto" style={{ fontFamily: 'DM Sans' }}>
               I'm Himanshu Gayguwal — a photographer from Mumbai who believes every moment deserves to be remembered, and every story deserves to be beautifully told.
             </p>
           </motion.div>
