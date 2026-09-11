@@ -1,5 +1,4 @@
 services:
-  # ---- DATABASE (shared by backend-dev and backend-prod) ----
   db:
     image: postgres:16-alpine
     environment:
@@ -11,63 +10,8 @@ services:
     ports:
       - "5434:5432" # non-default host port to avoid clashing with other local Postgres instances
 
-  # ---- FRONTEND: DEVELOPMENT MODE ----
-  # This reflects your local changes instantly using Volume Mounting.
-  # No need to rebuild the image when you change your code!
-  dev:
-    image: node:20-alpine
-    working_dir: /app
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend:/app
-      # Anonymous volume for node_modules ensures the container
-      # uses its own dependencies instead of your local ones.
-      - /app/node_modules
-    # We pass --host to Vite so it's accessible outside the container
-    command: sh -c "npm install && npm run dev -- --host"
-    environment:
-      - CHOKIDAR_USEPOLLING=true # Helps with file watching on some systems
-    depends_on:
-      - backend-dev
-
-  # ---- FRONTEND: PRODUCTION MODE ----
-  # This uses your Dockerfile to build a fast, secure Nginx-based image.
-  prod:
-    build: ./frontend
-    image: himanshu-photography:prod
-    ports:
-      - "8080:80"
-    depends_on:
-      - backend-prod
-
-  # ---- BACKEND: DEVELOPMENT MODE ----
-  # Volume-mounted like the frontend `dev` service so code edits reload instantly
-  # (Django's runserver auto-reloads on file changes).
-  backend-dev:
-    build: ./backend
-    working_dir: /app
-    volumes:
-      - ./backend:/app
-    ports:
-      - "8000:8000"
-    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
-    environment:
-      - DJANGO_DEBUG=True
-      - DJANGO_SECRET_KEY=dev-insecure-key-change-me
-      - DJANGO_ALLOWED_HOSTS=*
-      - POSTGRES_DB=himanshu
-      - POSTGRES_USER=himanshu
-      - POSTGRES_PASSWORD=himanshu
-      - POSTGRES_HOST=db
-      - POSTGRES_PORT=5432
-      - CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:8080
-    depends_on:
-      - db
-
-  # ---- BACKEND: PRODUCTION MODE ----
   # Builds an immutable image (no volume mount) and serves via gunicorn.
-  backend-prod:
+  backend:
     build: ./backend
     image: himanshu-photography-backend:prod
     ports:
@@ -84,6 +28,15 @@ services:
       - CORS_ALLOWED_ORIGINS=http://localhost:8080
     depends_on:
       - db
+
+  # Uses the Dockerfile's multi-stage build: `npm run build` -> served via Nginx.
+  frontend:
+    build: ./frontend
+    image: himanshu-photography:prod
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
 
 volumes:
   pgdata:
