@@ -42,45 +42,68 @@ newgrp docker   # or just log out and back in
 docker --version && docker compose version
 ```
 
-## 3. Install Jenkins (needs Java first)
+## 3. Run Jenkins as a Docker container (not a native apt package)
+
+Jenkins's Debian/Ubuntu apt repo requires trusting a signing key that Jenkins periodically rotates
+— see "Why not the apt package" below for what went wrong the first time this was tried. Since this
+box already runs everything else in Docker, it's simpler and more durable to run Jenkins the same
+way. The one thing the stock `jenkins/jenkins:lts` image is missing is the `docker` CLI itself
+(needed so pipeline steps can run `docker pull`/`docker compose up`), so build a small image on top
+of it that adds that:
 
 ```bash
-sudo apt install -y fontconfig openjdk-17-jre
-java -version   # confirm 17 — Jenkins LTS requires 17 or 21
+mkdir -p ~/jenkins-docker && cd ~/jenkins-docker
+cat > Dockerfile <<'EOF'
+FROM jenkins/jenkins:lts
+USER root
+RUN apt-get update && apt-get install -y ca-certificates curl gnupg \
+  && install -m 0755 -d /etc/apt/keyrings \
+  && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
+  && chmod a+r /etc/apt/keyrings/docker.gpg \
+  && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(. /etc/os-release && echo $VERSION_CODENAME) stable" > /etc/apt/sources.list.d/docker.list \
+  && apt-get update \
+  && apt-get install -y docker-ce-cli docker-compose-plugin \
+  && rm -rf /var/lib/apt/lists/*
+USER jenkins
+EOF
 
-# Explicitly dearmor into binary keyring format — saving the raw downloaded key directly
-# (e.g. via `wget -O ...`) can leave apt unable to verify it (NO_PUBKEY error on update).
-curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo gpg --dearmor -o /usr/share/keyrings/jenkins-keyring.gpg
-
-echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.gpg]" \
-  https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
-  /etc/apt/sources.list.d/jenkins.list > /dev/null
-
-sudo apt-get update
-# Should show "Hit:" for the Jenkins line, no NO_PUBKEY warning. If it still fails, see
-# "Troubleshooting" below.
-sudo apt-get install -y jenkins
-sudo systemctl enable --now jenkins
-sudo systemctl status jenkins   # should show "active (running)"
+docker build -t jenkins-with-docker .
 ```
 
-## 4. Let Jenkins actually run `docker` commands
+(This uses Docker's **Debian** repo, not Ubuntu's — `jenkins/jenkins:lts` is Debian-based
+internally regardless of the Ubuntu host underneath it. Docker's own signing key here is fetched
+fresh at build time, not baked into this doc, so it can't go stale the same way.)
 
-Easy to forget, and exactly what the `Jenkinsfile` needs for `docker login` / `docker pull` /
-`docker compose up`:
+## 4. Run it, with access to the host's Docker daemon
 
 ```bash
-sudo usermod -aG docker jenkins
-sudo systemctl restart jenkins
+sudo mkdir -p /var/jenkins_home
+sudo docker run -d \
+  --name jenkins \
+  --restart unless-stopped \
+  -p 8080:8080 -p 50000:50000 \
+  -v /var/jenkins_home:/var/jenkins_home \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -u root \
+  jenkins-with-docker
+```
 
-# sanity check — should list containers (or an empty list), not "permission denied"
-sudo -u jenkins docker ps
+- `-v /var/run/docker.sock:/var/run/docker.sock` — lets Jenkins (itself running in a container)
+  issue `docker` commands that execute against the **host's** Docker daemon ("Docker outside of
+  Docker"). This is what a native install would otherwise get via `usermod -aG docker jenkins`.
+- `-u root` — needed for Jenkins to have permission to use that socket; an acceptable tradeoff for
+  a single-instance setup like this.
+- `-v /var/jenkins_home:/var/jenkins_home` — persists Jenkins's config/jobs/build-history outside
+  the container, so `docker restart jenkins` (or even recreating the container) doesn't lose them.
+
+```bash
+sudo docker exec jenkins docker ps   # sanity check — lists the host's containers, not an error
 ```
 
 ## 5. Finish setup in the browser
 
 ```bash
-sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+sudo docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 ```
 
 Visit `http://<your-elastic-ip>:8080` (works because the security group allows port 8080 from your
@@ -104,31 +127,26 @@ own IP) → paste that password → **Install suggested plugins** → create you
   Developer settings → Personal access tokens)
 - ID: `ghcr-creds` — must match the `credentialsId` referenced in the `Jenkinsfile`
 
-## Troubleshooting: `NO_PUBKEY` / "not signed" on `apt-get update`
+## Why not the apt package
+
+An earlier version of this doc installed Jenkins natively via `apt` using
+`https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key`. That failed with:
 
 ```
 W: OpenPGP signature verification failed: ... NO_PUBKEY 7198F4B714ABFC68
 E: The repository '...' is not signed.
 ```
 
-This means apt never actually trusted the Jenkins repo, so it silently ignored its package index —
-which is why a *later* `apt-get install -y jenkins` fails with `Package 'jenkins' has no
-installation candidate` and `systemctl enable` fails with `Unit jenkins.service does not exist`.
-Both of those are downstream symptoms, not separate bugs; fixing the key fixes both.
+which cascades into `apt-get install -y jenkins` failing with `Package 'jenkins' has no
+installation candidate` — a downstream symptom, not a separate bug: apt never trusted the repo, so
+it silently ignored its package index. Digging in with `gpg --list-keys` on the downloaded key
+showed why: that "2023" key had **expired** (`[expired: 2026-03-26]`), and Jenkins had since
+rotated to a newer one this doc didn't know the URL for. Re-dearmoring the same expired key changes
+nothing — the key itself is the problem, not the file format.
 
-```bash
-sudo rm -f /usr/share/keyrings/jenkins-keyring.asc
-sudo rm -f /etc/apt/sources.list.d/jenkins.list
-
-curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo gpg --dearmor -o /usr/share/keyrings/jenkins-keyring.gpg
-gpg --no-default-keyring --keyring /usr/share/keyrings/jenkins-keyring.gpg --list-keys   # sanity check — prints a fingerprint, not an error
-
-echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.gpg]" \
-  https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
-  /etc/apt/sources.list.d/jenkins.list > /dev/null
-
-sudo apt-get update
-```
+Rather than chase Jenkins's key rotations indefinitely, running Jenkins as a Docker container (as
+above) sidesteps this whole failure class — Docker's own signing key is fetched fresh inside the
+image build every time, and there's no separate systemd/apt package to go stale on the host.
 
 ## What this doesn't cover yet
 
