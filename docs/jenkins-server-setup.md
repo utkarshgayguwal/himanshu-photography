@@ -109,6 +109,33 @@ sudo docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 Visit `http://<your-elastic-ip>:8080` (works because the security group allows port 8080 from your
 own IP) → paste that password → **Install suggested plugins** → create your admin user.
 
+### Troubleshooting: container is running, but `:8080` isn't reachable in the browser
+
+First isolate whether this is Jenkins itself or the network path to it:
+
+```bash
+curl -I http://localhost:8080
+```
+
+If this returns an HTTP response (even `403 Forbidden` — that's normal for an unauthenticated
+request and just proves Jenkins is alive and answering, with `X-Jenkins: <version>` in the headers
+to confirm it), Jenkins is fine and the problem is purely between your browser and the server. Two
+likely causes, in order of likelihood:
+
+1. **Your current public IP doesn't match the security group rule.** Run `curl ifconfig.me` on
+   your own laptop/phone (not the server) and compare it to the *Source* set on the port 8080
+   inbound rule (EC2 Console → Security Groups → this instance's group → Inbound rules). "My IP" in
+   a security group rule is a one-time snapshot taken when the rule was created — it does not
+   update automatically, and home/mobile IPs change often. Fix: edit the rule, click the "My IP"
+   button again (or paste the current IP manually), save.
+2. **You're browsing to the wrong IP.** Run `curl ifconfig.me` *on the server itself* — that must
+   match what's in your browser's address bar. If no Elastic IP was allocated/associated, the
+   instance's public IP changes on every stop/start.
+
+If `curl -I http://localhost:8080` itself fails (connection refused, not just an HTTP error code),
+the problem is upstream of networking entirely — check `sudo docker logs jenkins` for a crash
+during startup instead.
+
 ## 6. Install the extra plugins this pipeline needs
 
 *Manage Jenkins → Plugins → Available plugins*:
