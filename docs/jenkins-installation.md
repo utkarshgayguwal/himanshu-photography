@@ -64,15 +64,41 @@ sudo systemctl status jenkins
 
 Should show `active (running)`.
 
-## 6. Get the initial admin password and finish setup in the browser
+## 6. Open port 8080 in the instance's security group
+
+Easy to forget — `systemctl status jenkins` showing `active (running)` only means Jenkins is
+listening *on the server*, not that anything outside it can reach that port. Without this step,
+visiting `http://<public-ip>:8080` in a browser just hangs/reloads endlessly instead of failing
+fast, since AWS silently drops packets to a port with no inbound rule.
+
+EC2 Console → select the instance → **Security** tab → click the security group name → **Inbound
+rules** → **Add rule**:
+
+- Type: **Custom TCP**
+- Port range: **8080**
+- Source: `0.0.0.0/0` (or restrict to your own IP — but if you do, remember "My IP" is a one-time
+  snapshot that doesn't auto-update; see `jenkins-server-setup.md`'s troubleshooting section if
+  8080 stops being reachable again later after your IP changes)
+
+Verify before opening the browser:
+
+```bash
+# On the server — confirms Jenkins is actually listening
+sudo ss -tlnp | grep 8080
+```
+```bash
+# On your own machine — should connect instantly once the rule is added, not hang
+nc -zv <your-public-ip> 8080
+```
+
+## 7. Get the initial admin password and finish setup in the browser
 
 ```bash
 sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 ```
 
-Visit `http://<your-public-ip>:8080` (the same security-group port-8080 rule from the sizing/network
-discussion applies here) → paste the password → **Install suggested plugins** → create your admin
-user.
+Visit `http://<your-public-ip>:8080` → paste the password → **Install suggested plugins** → create
+your admin user.
 
 From here, the remaining setup (plugins, GHCR credentials) is identical to
 [`jenkins-server-setup.md`](./jenkins-server-setup.md)'s steps 6–7 — those aren't specific to
