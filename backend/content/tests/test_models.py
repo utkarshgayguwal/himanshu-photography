@@ -10,7 +10,9 @@ from content.models import (
     SiteSettings,
     Stat,
 )
-from content.models import Testimonial as _Testimonial  # underscore prefix: still starts with "Test" otherwise, which pytest tries to collect as a test class
+
+# Leading underscore: pytest tries to collect a plain `Testimonial` alias as a test class.
+from content.models import Testimonial as _Testimonial
 
 pytestmark = pytest.mark.django_db
 

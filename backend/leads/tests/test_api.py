@@ -19,7 +19,7 @@ VALID_PAYLOAD = {
 
 @pytest.fixture(autouse=True)
 def clear_throttle_cache():
-    """The contact endpoint is rate-limited (10/hour); reset it around every test so tests don't bleed into each other."""
+    """The contact endpoint is rate-limited (10/hour); reset it around every test to avoid bleed-through."""
     cache.clear()
     yield
     cache.clear()

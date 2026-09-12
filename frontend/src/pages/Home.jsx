@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { ArrowRight, Camera, Star, ChevronDown } from 'lucide-react';
+import { ArrowRight, Star, ChevronDown } from 'lucide-react';
 
 const UNSPLASH_HERO = 'https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=1800&q=80'; // wedding
 const GALLERY_IMAGES = [
