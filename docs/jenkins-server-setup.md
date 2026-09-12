@@ -48,14 +48,17 @@ docker --version && docker compose version
 sudo apt install -y fontconfig openjdk-17-jre
 java -version   # confirm 17 — Jenkins LTS requires 17 or 21
 
-sudo wget -O /usr/share/keyrings/jenkins-keyring.asc \
-  https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+# Explicitly dearmor into binary keyring format — saving the raw downloaded key directly
+# (e.g. via `wget -O ...`) can leave apt unable to verify it (NO_PUBKEY error on update).
+curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo gpg --dearmor -o /usr/share/keyrings/jenkins-keyring.gpg
 
-echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc]" \
+echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.gpg]" \
   https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
   /etc/apt/sources.list.d/jenkins.list > /dev/null
 
 sudo apt-get update
+# Should show "Hit:" for the Jenkins line, no NO_PUBKEY warning. If it still fails, see
+# "Troubleshooting" below.
 sudo apt-get install -y jenkins
 sudo systemctl enable --now jenkins
 sudo systemctl status jenkins   # should show "active (running)"
@@ -100,6 +103,32 @@ own IP) → paste that password → **Install suggested plugins** → create you
 - Password: a GitHub **Personal Access Token** with `read:packages` scope (github.com → Settings →
   Developer settings → Personal access tokens)
 - ID: `ghcr-creds` — must match the `credentialsId` referenced in the `Jenkinsfile`
+
+## Troubleshooting: `NO_PUBKEY` / "not signed" on `apt-get update`
+
+```
+W: OpenPGP signature verification failed: ... NO_PUBKEY 7198F4B714ABFC68
+E: The repository '...' is not signed.
+```
+
+This means apt never actually trusted the Jenkins repo, so it silently ignored its package index —
+which is why a *later* `apt-get install -y jenkins` fails with `Package 'jenkins' has no
+installation candidate` and `systemctl enable` fails with `Unit jenkins.service does not exist`.
+Both of those are downstream symptoms, not separate bugs; fixing the key fixes both.
+
+```bash
+sudo rm -f /usr/share/keyrings/jenkins-keyring.asc
+sudo rm -f /etc/apt/sources.list.d/jenkins.list
+
+curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo gpg --dearmor -o /usr/share/keyrings/jenkins-keyring.gpg
+gpg --no-default-keyring --keyring /usr/share/keyrings/jenkins-keyring.gpg --list-keys   # sanity check — prints a fingerprint, not an error
+
+echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.gpg]" \
+  https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
+  /etc/apt/sources.list.d/jenkins.list > /dev/null
+
+sudo apt-get update
+```
 
 ## What this doesn't cover yet
 
