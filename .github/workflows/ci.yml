@@ -117,6 +117,5 @@ jobs:
           push: ${{ github.event_name == 'push' }}
           tags: |
             ${{ env.REGISTRY }}/${{ github.repository }}-${{ matrix.name }}:${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ github.repository }}-${{ matrix.name }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
