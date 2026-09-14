@@ -10,7 +10,7 @@ services:
     restart: unless-stopped
 
   backend:
-    image: ghcr.io/utkarshgayguwal/himanshu-photography-backend:${BACKEND_TAG:-latest}
+    image: ghcr.io/utkarshgayguwal/himanshu-photography-backend:${BACKEND_TAG}
     ports:
       - "8001:8000"
     environment:
@@ -28,7 +28,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    image: ghcr.io/utkarshgayguwal/himanshu-photography-frontend:${FRONTEND_TAG:-latest}
+    image: ghcr.io/utkarshgayguwal/himanshu-photography-frontend:${FRONTEND_TAG}
     ports:
       - "8080:80"
     depends_on:
