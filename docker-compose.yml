@@ -26,6 +26,8 @@ services:
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
       - CORS_ALLOWED_ORIGINS=http://localhost:8080
+      - CALLMEBOT_API_KEY=change-me-in-local-env
+      - WHATSAPP_ALERT_PHONE=+91XXXXXXXXXX
     depends_on:
       - db
 

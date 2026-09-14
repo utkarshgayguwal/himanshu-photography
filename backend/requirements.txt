@@ -3,6 +3,7 @@ python-dotenv>=1.0,<2
 djangorestframework>=3.15,<3.16
 psycopg2-binary>=2.9,<3
 django-cors-headers>=4.4,<4.5
+requests>=2.32,<3
 whitenoise>=6.7,<6.8
 gunicorn>=22.0,<23
 pytest>=8.2,<9

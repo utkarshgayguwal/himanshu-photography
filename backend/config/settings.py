@@ -101,6 +101,9 @@ CORS_ALLOWED_ORIGINS = _env_list(
     'CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://localhost:8080'
 )
 
+CALLMEBOT_API_KEY = os.environ.get('CALLMEBOT_API_KEY', '')
+WHATSAPP_ALERT_PHONE = os.environ.get('WHATSAPP_ALERT_PHONE', '')
+
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.AllowAny'],
     'DEFAULT_THROTTLE_CLASSES': ['rest_framework.throttling.ScopedRateThrottle'],

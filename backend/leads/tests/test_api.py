@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 from django.core.cache import cache
 from django.urls import reverse
@@ -49,6 +51,20 @@ class TestContactSubmissionCreate:
         assert 'id' not in response.data
         assert 'is_read' not in response.data
         assert 'created_at' not in response.data
+
+    @patch('leads.views.notify_new_lead')
+    def test_submission_triggers_whatsapp_notification(self, mock_notify, api_client):
+        response = api_client.post(reverse('contact-list'), VALID_PAYLOAD, format='json')
+        assert response.status_code == status.HTTP_201_CREATED
+        mock_notify.assert_called_once()
+        (submission,), _ = mock_notify.call_args
+        assert submission.name == VALID_PAYLOAD['name']
+
+    @patch('leads.views.notify_new_lead', side_effect=Exception('boom'))
+    def test_whatsapp_failure_does_not_break_submission(self, mock_notify, api_client):
+        response = api_client.post(reverse('contact-list'), VALID_PAYLOAD, format='json')
+        assert response.status_code == status.HTTP_201_CREATED
+        assert ContactSubmission.objects.count() == 1
 
 
 class TestContactSubmissionManagement:

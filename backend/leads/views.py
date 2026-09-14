@@ -1,8 +1,13 @@
+import logging
+
 from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.viewsets import ModelViewSet
 
 from .models import ContactSubmission
 from .serializers import ContactSubmissionAdminSerializer, ContactSubmissionSerializer
+from .whatsapp import notify_new_lead
+
+logger = logging.getLogger(__name__)
 
 
 class ContactSubmissionViewSet(ModelViewSet):
@@ -20,3 +25,10 @@ class ContactSubmissionViewSet(ModelViewSet):
         if self.action == 'create':
             return ContactSubmissionSerializer
         return ContactSubmissionAdminSerializer
+
+    def perform_create(self, serializer):
+        submission = serializer.save()
+        try:
+            notify_new_lead(submission)
+        except Exception:
+            logger.exception('Failed to dispatch WhatsApp notification.')
