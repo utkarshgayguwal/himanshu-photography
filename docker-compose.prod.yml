@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=himanshu
+      - POSTGRES_USER=himanshu
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  backend:
+    image: ghcr.io/utkarshgayguwal/himanshu-photography-backend:${BACKEND_TAG:-latest}
+    ports:
+      - "8001:8000"
+    environment:
+      - DJANGO_DEBUG=False
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DJANGO_ALLOWED_HOSTS=*
+      - POSTGRES_DB=himanshu
+      - POSTGRES_USER=himanshu
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - CORS_ALLOWED_ORIGINS=${PUBLIC_ORIGIN:-http://localhost:8080}
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  frontend:
+    image: ghcr.io/utkarshgayguwal/himanshu-photography-frontend:${FRONTEND_TAG:-latest}
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  pgdata:
