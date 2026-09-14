@@ -115,5 +115,11 @@ sudo systemctl restart jenkins
 sudo -u jenkins docker ps   # sanity check — should list containers, not "permission denied"
 ```
 
+## Next: the actual deploy pipeline
+
+Once Jenkins is running and can talk to Docker, [`cd-deployment.md`](./cd-deployment.md) covers
+what's actually configured on top of this — the Jenkins job itself, the `Jenkinsfile`, and how a
+`git push` ends up as a running deployment.
+
 (This assumes Docker itself is already installed — see `jenkins-server-setup.md`'s step 2 for
 those commands, unchanged regardless of how Jenkins itself is installed.)

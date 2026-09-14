@@ -9,7 +9,6 @@ it's written the way it is.
 
 ```yaml
 on:
-  pull_request:
   push:
     branches: [main]
 
@@ -18,10 +17,12 @@ permissions:
   packages: write
 ```
 
-Runs on every PR (any branch) *and* on every push to `main`. This distinction matters: PRs get full
-verification — lint, test, Docker build — but should never push anything to the registry (you don't
-want an unreviewed branch's image sitting in GHCR). Only a push to `main` (i.e. a merge) does that.
-The `docker` job below checks `github.event_name` to tell these two cases apart.
+**Runs only on push to `main`** — an earlier version of this workflow also ran on `pull_request`
+(build-only, no registry push, so an unreviewed branch's image never landed in GHCR). That trigger
+was later removed: every run now both builds and pushes. The `docker` job below still has
+`if: github.event_name == 'push'` conditionals from that era — they're currently always-true given
+there's only one trigger left, effectively dead code kept in case a PR-triggered build-only lane
+gets reintroduced later. Worth knowing so you don't read them as meaningfully conditional today.
 
 `packages: write` is required for the final job to push images to GHCR using the automatically
 provided `GITHUB_TOKEN` — without it, the push step fails with a 403 regardless of how login is
@@ -157,18 +158,15 @@ image.
     push: ${{ github.event_name == 'push' }}
     tags: |
       ${{ env.REGISTRY }}/${{ github.repository }}-${{ matrix.name }}:${{ github.sha }}
-      ${{ env.REGISTRY }}/${{ github.repository }}-${{ matrix.name }}:latest
 ```
 
-This is the PR-vs-merge split in practice: on a PR, this job builds each image (proving the
-Dockerfile is valid — catches a broken `Dockerfile` before merge) but never logs into or pushes to
-GHCR. Only a push to `main` does both.
-
-**Tagging by `${{ github.sha }}`** (the full commit SHA) is the single most important line here —
-it's what makes rollback possible later on the Jenkins/deploy side: "redeploy the previous version"
-becomes "pull a different tag that's already sitting in the registry," not a rebuild from an old
-commit. `latest` is pushed too, purely for convenience when browsing the registry by hand — nothing
-in the deploy pipeline should ever depend on it.
+**Tagged only by `${{ github.sha }}`** (the full commit SHA) — no `:latest` tag is pushed. An
+earlier version also pushed `:latest` for convenience browsing the registry by hand, but that's
+been dropped: Jenkins's deploy side (see [`cd-deployment.md`](./cd-deployment.md)) now looks up
+images by the exact `GIT_COMMIT` it checked out, so a floating `:latest` tag serves no purpose here
+and only risks someone building a deploy path that depends on it by accident. SHA-only tagging is
+also what makes rollback possible: "redeploy the previous version" is "pull a different tag that's
+already in the registry," not a rebuild from an old commit.
 
 ```yaml
 cache-from: type=gha
@@ -181,11 +179,11 @@ single run.
 
 ## What this workflow deliberately does *not* do
 
-- It doesn't deploy anywhere — see [`cicd-pipeline.md`](./cicd-pipeline.md) for why that's Jenkins's
-  job, triggered by a webhook once this workflow finishes.
+- It doesn't deploy anywhere — see [`cd-deployment.md`](./cd-deployment.md) for what actually
+  happens after this workflow finishes (Jenkins polls for new commits, not a webhook — a deviation
+  from `cicd-pipeline.md`'s original design sketch).
 - It doesn't run `pylint` — see `cicd-pipeline.md`'s comparison table for why `ruff` alone is the
   recommended CI gate, with pylint (if used at all) better suited as a non-blocking, separately-run
   report.
-- It builds both images on *every* PR, even if only one side changed. A future optimization would
-  use `dorny/paths-filter` (or similar) to skip the frontend build on backend-only PRs and vice
-  versa — not done here to keep the workflow simple to read first.
+- Since the `pull_request` trigger was removed, it no longer builds on every PR — only on push to
+  `main`. A future improvement might reintroduce PR-triggered build-only verification.
