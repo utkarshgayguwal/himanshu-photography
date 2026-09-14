@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    parameters {
-        string(name: 'BACKEND_TAG', description: 'Backend image SHA')
-        string(name: 'FRONTEND_TAG', description: 'Frontend image SHA')
-    }
-
     environment {
         REGISTRY   = 'ghcr.io'
         IMAGE_BASE = 'ghcr.io/utkarshgayguwal/himanshu-photography'
@@ -22,19 +17,39 @@ pipeline {
             }
         }
 
+        stage('Wait for images') {
+            steps {
+                sh '''
+                    for i in $(seq 1 30); do
+                        if docker manifest inspect ${IMAGE_BASE}-backend:${GIT_COMMIT} >/dev/null 2>&1 &&
+                        docker manifest inspect ${IMAGE_BASE}-frontend:${GIT_COMMIT} >/dev/null 2>&1; then
+                            echo "Both images are available for ${GIT_COMMIT}"
+                            exit 0
+                        fi
+
+                        echo "Images not available yet. Waiting 20 seconds..."
+                        sleep 20
+                    done
+
+                    echo "Images were not published for ${GIT_COMMIT}"
+                    exit 1
+                '''
+            }
+        }
+
         stage('Pull images') {
             steps {
                 sh """
-                    docker pull ${IMAGE_BASE}-backend:${params.BACKEND_TAG}
-                    docker pull ${IMAGE_BASE}-frontend:${params.FRONTEND_TAG}
+                    docker pull ${IMAGE_BASE}-backend:${GIT_COMMIT}
+                    docker pull ${IMAGE_BASE}-frontend:${GIT_COMMIT}
                 """
             }
         }
 
         stage('Deploy') {
             environment {
-                BACKEND_TAG  = "${params.BACKEND_TAG}"
-                FRONTEND_TAG = "${params.FRONTEND_TAG}"
+                BACKEND_TAG  = "${GIT_COMMIT}"
+                FRONTEND_TAG = "${GIT_COMMIT}"
             }
             steps {
                 sh 'docker compose -f docker-compose.prod.yml up -d'
